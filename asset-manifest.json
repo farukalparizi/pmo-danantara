@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/pmo-danantara/static/css/main.dcc9b79b.css",
+    "main.js": "/pmo-danantara/static/js/main.abb2a16f.js",
+    "static/js/453.f399b367.chunk.js": "/pmo-danantara/static/js/453.f399b367.chunk.js",
+    "index.html": "/pmo-danantara/index.html",
+    "main.dcc9b79b.css.map": "/pmo-danantara/static/css/main.dcc9b79b.css.map",
+    "main.abb2a16f.js.map": "/pmo-danantara/static/js/main.abb2a16f.js.map",
+    "453.f399b367.chunk.js.map": "/pmo-danantara/static/js/453.f399b367.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.dcc9b79b.css",
+    "static/js/main.abb2a16f.js"
+  ]
+}
