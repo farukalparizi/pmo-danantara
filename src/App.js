@@ -1,10 +1,10 @@
 import React from 'react';
-import DanantaraPmo from './danantara-pmo'; // Menghubungkan ke file baru kamu
+import DanantaraApp from './DanantaraApp';
 
 function App() {
   return (
     <div className="App">
-      <DanantaraPmo />
+      <DanantaraApp />
     </div>
   );
 }

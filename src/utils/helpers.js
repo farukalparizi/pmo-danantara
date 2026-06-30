@@ -1,0 +1,13 @@
+export const TODAY = "2025-06-29";
+export const pd   = s => new Date(s + "T00:00:00");
+export const dif  = (a,b) => Math.round((pd(b)-pd(a))/86400000);
+export const addD = (s,n) => { const d=pd(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+export const MO   = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+export const fmtD = s => { if(!s) return "-"; const d=pd(s); return `${d.getDate()} ${MO[d.getMonth()]} '${d.getFullYear().toString().slice(2)}`; };
+export const uid  = () => "x"+Math.random().toString(36).slice(2,7);
+export const rp   = n => "Rp " + (n||0).toLocaleString("id-ID");
+export const SH = {boxShadow:"0 4px 20px rgba(0,0,0,.04)", borderRadius:"20px", border:"1px solid rgba(0,0,0,.03)", background:"#FFFFFF"};
+export const SH2 = {boxShadow:"0 12px 40px -8px rgba(220,38,38,.20)", borderRadius:"24px", border:"1px solid rgba(255,255,255,.4)"};
+export const iCol = v => v>=1?"#16A34A":v>=.9?"#F59E0B":"#EF4444";
+export const projProg = (acts,pid) => { const pa=acts.filter(a=>a.pid===pid&&a.tp==="task"); return pa.length?Math.round(pa.reduce((s,a)=>s+a.p,0)/pa.length):0; };
+export const projSpiCpi = {P1:[.96,.98],P2:[1.01,.99],P3:[.79,.88],P4:[1.03,.97],P5:[.82,.89],P6:[1.05,1.02],P7:[.74,.85]};
