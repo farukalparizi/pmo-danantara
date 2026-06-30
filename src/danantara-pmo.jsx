@@ -564,7 +564,7 @@ function Dashboard({setView}){
       {/* KPI gradient cards */}
       <div className="grid grid-cols-4 gap-3">
         {KPI.map((k,i)=>(
-          <div key={i} className="rounded-2xl p-4 text-white relative overflow-hidden" style={{background:k.g,...SH}}>
+          <div key={i} className="rounded-2xl p-4 text-white relative overflow-hidden" style={{...SH, background:k.g}}>
             <div className="absolute right-2 top-2 text-3xl opacity-30">{k.i}</div>
             <p className="text-xs font-medium opacity-90">{k.l}</p>
             <p className="text-3xl font-extrabold mt-1">{k.v}</p>
