@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar, ComposedChart, Scatter, ScatterChart, ZAxis } from "recharts";
 import { exportToPDF, exportToExcel } from "./utils/exportData";
 
@@ -1023,7 +1023,15 @@ function Risk({projs}){
    MAIN APP
 ════════════════════════════════════════════════ */
 export default function App(){
-  const [view,setView]=useState("dashboard");
+  const [viewState, setViewState] = useState(window.location.hash.replace('#', '') || "dashboard");
+  useEffect(() => {
+    const onHashChange = () => setViewState(window.location.hash.replace('#', '') || "dashboard");
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+  const setView = (v) => { window.location.hash = v; setViewState(v); };
+  const view = viewState;
+
   const [sOpen,setSOpen]=useState(true);
   const [projs,setProjs]=useState(IP);
   const [acts,setActs]=useState(IA);
