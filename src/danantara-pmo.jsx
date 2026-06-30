@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar, ComposedChart, Scatter, ScatterChart, ZAxis } from "recharts";
+import { exportToPDF, exportToExcel } from "./utils/exportData";
 
 /* ════════════ UTILS ════════════ */
 const TODAY = "2025-06-29";
@@ -107,7 +108,7 @@ const BCF = {"on-track":["#DCFCE7","#15803D","On Track"],"at-risk":["#FEF3C7","#
 function Badge({st}){ const [bg,c,lb]=BCF[st]||BCF["on-track"]; return <span className="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" style={{background:bg,color:c}}>{lb}</span>; }
 function PBar({v,h="h-1.5",col}){ const c=col||(v>=80?"#16A34A":v>=40?"#F59E0B":"#EF4444"); return <div className={`w-full bg-gray-100 rounded-full overflow-hidden ${h}`}><div className="h-full rounded-full transition-all" style={{width:`${Math.min(100,v)}%`,background:c}}></div></div>; }
 const TIC={summary:"📁",task:"📌",milestone:"🔷"};
-const TCL={summary:"#1E3A8A",task:"#3B82F6",milestone:"#7C3AED"};
+const TCL={summary:"#7F1D1D",task:"#EF4444",milestone:"#7C3AED"};
 const calcProg = acts => { const t=acts.filter(a=>a.tp==="task"); return t.length?Math.round(t.reduce((s,a)=>s+a.p,0)/t.length):0; };
 
 /* EVM calc helper */
@@ -121,9 +122,9 @@ function evmCalc(bac, ac, pct){
 }
 
 /* ════════════ MODALS ════════════ */
-function Modal({title,sub,children,onClose,w="480px",accent="#0066CC"}){
+function Modal({title,sub,children,onClose,w="480px",accent="#DC2626"}){
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{background:"rgba(13,31,60,.55)",backdropFilter:"blur(2px)"}}>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{background:"rgba(28,25,23,.55)",backdropFilter:"blur(2px)"}}>
       <div className="bg-white rounded-2xl shadow-2xl flex flex-col" style={{width:w,maxHeight:"92vh"}}>
         <div className="p-4 border-b border-gray-100 flex justify-between items-start" style={{borderTop:`3px solid ${accent}`,borderRadius:"16px 16px 0 0"}}>
           <div><h3 className="font-bold text-gray-800">{title}</h3>{sub&&<p className="text-xs text-gray-400 mt-0.5">{sub}</p>}</div>
@@ -136,11 +137,11 @@ function Modal({title,sub,children,onClose,w="480px",accent="#0066CC"}){
 }
 const Inp = ({label,...p}) => (
   <div><label className="text-xs font-semibold text-gray-500 block mb-1">{label}</label>
-    <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-400 focus:outline-none" {...p}/></div>
+    <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-red-400 focus:outline-none" {...p}/></div>
 );
 const Sel = ({label,children,...p}) => (
   <div><label className="text-xs font-semibold text-gray-500 block mb-1">{label}</label>
-    <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-blue-400 focus:outline-none bg-white" {...p}>{children}</select></div>
+    <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-red-400 focus:outline-none bg-white" {...p}>{children}</select></div>
 );
 
 /* ─── Add Project ─── */
@@ -163,7 +164,7 @@ function AddProjModal({onSave,onClose}){
       <div className="p-4 border-t border-gray-100 flex justify-end gap-2">
         <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Batal</button>
         <button onClick={()=>{if(!f.code||!f.name)return alert("Kode & Nama wajib diisi");onSave({...f,id:uid(),st:"on-track",bud:+f.bud||0});}}
-          className="px-4 py-2 text-sm text-white rounded-lg font-medium" style={{background:"#0066CC"}}>Simpan Proyek</button>
+          className="px-4 py-2 text-sm text-white rounded-lg font-medium" style={{background:"#DC2626"}}>Simpan Proyek</button>
       </div>
     </Modal>
   );
@@ -220,7 +221,7 @@ function ProgModal({act,onSave,onClose}){
           <div className="rounded-lg p-2.5 text-center" style={{background:"#F8FAFC"}}><div className="text-gray-400">Perubahan</div><div className="font-bold text-lg" style={{color:prog>=act.p?"#16A34A":"#EF4444"}}>{prog>=act.p?"+":""}{prog-act.p}%</div></div>
         </div>
         <div><label className="text-xs font-semibold text-gray-500 block mb-1">Catatan / Kendala</label>
-          <textarea rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-blue-400 focus:outline-none" placeholder="Perkembangan, kendala, rencana..." value={note} onChange={e=>setNote(e.target.value)}/></div>
+          <textarea rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-red-400 focus:outline-none" placeholder="Perkembangan, kendala, rencana..." value={note} onChange={e=>setNote(e.target.value)}/></div>
         <div className="text-xs text-gray-400">Update oleh: Admin Perusahaan · {fmtD(TODAY)}</div>
       </div>
       <div className="p-4 border-t border-gray-100 flex justify-end gap-2">
@@ -259,12 +260,12 @@ function GanttChart({proj,myActs}){
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden" style={SH}>
-      <div className="p-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2" style={{background:"linear-gradient(90deg,#F8FAFC,#EFF6FF)"}}>
+      <div className="p-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2" style={{background:"linear-gradient(90deg,#F8FAFC,#FEF2F2)"}}>
         <div><span className="font-bold text-sm text-gray-800">{proj.name}</span>
           <span className="text-xs text-gray-400 ml-2">Gantt Chart · {fmtD(proj.start)} → {fmtD(proj.end)}</span></div>
         <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
           <span className="flex items-center gap-1"><div className="w-4 h-2.5 rounded-sm border border-red-400" style={{background:"#FCA5A5"}}></div>Kritis</span>
-          <span className="flex items-center gap-1"><div className="w-4 h-2.5 rounded-sm border border-blue-400" style={{background:"#93C5FD"}}></div>Normal</span>
+          <span className="flex items-center gap-1"><div className="w-4 h-2.5 rounded-sm border border-red-400" style={{background:"#FCA5A5"}}></div>Normal</span>
           <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rotate-45" style={{background:"#7C3AED"}}></div>Milestone</span>
           <span className="flex items-center gap-1"><div className="w-3 border-t-2 border-dashed border-gray-400"></div>Relasi</span>
           <span className="flex items-center gap-1"><div className="w-0.5 h-3 bg-red-500"></div>Hari ini</span>
@@ -304,7 +305,7 @@ function GanttChart({proj,myActs}){
               </svg>
               {myActs.map((a,i)=>{
                 const {lx,rw}=getBar(a); const bh=a.tp==="summary"?13:10; const by=i*RH+(RH-bh)/2;
-                const col=a.cr?"#EF4444":a.tp==="summary"?"#1E40AF":"#3B82F6";
+                const col=a.cr?"#EF4444":a.tp==="summary"?"#1E40AF":"#EF4444";
                 if(a.tp==="milestone"){const ms=8;return <div key={a.id} title={`${a.wbs} ${a.nm}\n${fmtD(a.s)}`} style={{position:"absolute",top:`${i*RH+RH/2-ms}px`,left:`${lx-ms}px`,width:`${ms*2}px`,height:`${ms*2}px`,background:"#7C3AED",transform:"rotate(45deg)",zIndex:12,cursor:"pointer",boxShadow:"0 1px 3px rgba(124,58,237,.4)"}}></div>;}
                 if(a.tp==="summary"){return (<div key={a.id} style={{position:"absolute",top:`${by}px`,left:`${lx}px`,width:`${rw}px`,height:`${bh}px`,zIndex:12}}>
                   <div style={{height:"7px",background:col,borderRadius:"2px",position:"relative"}}>
@@ -350,7 +351,7 @@ function WBSTable({proj,myActs,setActs}){
             <thead><tr style={{background:"#F1F5F9"}}>{["ID","WBS","Nama Aktivitas","Tipe","PIC","Mulai","Selesai","Dur","Progress","Pred","Aksi"].map((h,i)=>(<th key={i} className={`p-2.5 font-semibold text-gray-500 whitespace-nowrap ${i<3?"text-left":"text-center"}`}>{h}</th>))}</tr></thead>
             <tbody>
               {myActs.map(a=>{ const isE=editId===a.id; const pc=a.p>=80?"#16A34A":a.p>=40?"#F59E0B":"#EF4444";
-                return (<tr key={a.id} className={`border-t transition-colors ${isE?"bg-blue-50":a.tp==="summary"?"bg-gray-50/70":""} hover:bg-blue-50/30`} style={{borderColor:"#F1F5F9"}}>
+                return (<tr key={a.id} className={`border-t transition-colors ${isE?"bg-red-50":a.tp==="summary"?"bg-gray-50/70":""} hover:bg-red-50/30`} style={{borderColor:"#F1F5F9"}}>
                   <td className="p-2 font-mono text-gray-400 text-center">{a.id}</td>
                   <td className="p-2 font-mono font-bold" style={{color:a.cr?"#DC2626":"#6B7280"}}>{isE?<input className="border rounded px-1 py-0.5 w-12" value={ed.wbs} onChange={ev=>e("wbs",ev.target.value)}/>:a.wbs}</td>
                   <td className="p-2" style={{paddingLeft:`${8+(a.lv-1)*14}px`}}><div className="flex items-center gap-1.5">
@@ -366,7 +367,7 @@ function WBSTable({proj,myActs,setActs}){
                   <td className="p-2 text-center font-mono text-gray-400">{isE?<input className="border rounded px-1 py-0.5 w-16" value={ed.pr} onChange={ev=>e("pr",ev.target.value)}/>:a.pr||"—"}</td>
                   <td className="p-2 text-center"><div className="flex items-center justify-center gap-0.5">
                     {isE?(<><button onClick={()=>{setActs(p=>p.map(x=>x.id===editId?{...x,...ed,d:dif(ed.s,ed.e)}:x));setEditId(null);}} className="px-2 py-1 rounded text-white font-bold" style={{background:"#22C55E"}}>💾</button><button onClick={()=>setEditId(null)} className="px-2 py-1 rounded bg-gray-200 text-gray-600 font-bold">✕</button></>)
-                    :(<><button onClick={()=>{setEditId(a.id);setEd({...a});}} className="px-1.5 py-1 rounded hover:bg-blue-100" title="Edit">✏️</button>{a.tp!=="summary"&&<button onClick={()=>setProgAct(a)} className="px-1.5 py-1 rounded hover:bg-green-100" title="Update Progress">📊</button>}<button onClick={()=>{if(window.confirm("Hapus aktivitas?"))setActs(p=>p.filter(x=>x.id!==a.id));}} className="px-1.5 py-1 rounded hover:bg-red-100" title="Hapus">🗑️</button></>)}
+                    :(<><button onClick={()=>{setEditId(a.id);setEd({...a});}} className="px-1.5 py-1 rounded hover:bg-red-100" title="Edit">✏️</button>{a.tp!=="summary"&&<button onClick={()=>setProgAct(a)} className="px-1.5 py-1 rounded hover:bg-green-100" title="Update Progress">📊</button>}<button onClick={()=>{if(window.confirm("Hapus aktivitas?"))setActs(p=>p.filter(x=>x.id!==a.id));}} className="px-1.5 py-1 rounded hover:bg-red-100" title="Hapus">🗑️</button></>)}
                   </div></td>
                 </tr>);
               })}
@@ -393,9 +394,9 @@ function ProjDetail({proj,acts,setActs,onBack}){
   const totalTask=myActs.filter(a=>a.tp==="task").length;
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm"><button onClick={onBack} className="text-blue-600 hover:underline font-medium">← Daftar Proyek</button><span className="text-gray-300">/</span><span className="text-gray-700 font-semibold truncate">{proj.name}</span></div>
+      <div className="flex items-center gap-2 text-sm"><button onClick={onBack} className="text-red-600 hover:underline font-medium">← Daftar Proyek</button><span className="text-gray-300">/</span><span className="text-gray-700 font-semibold truncate">{proj.name}</span></div>
       {/* Hero header with gradient */}
-      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#0D1F3C 0%,#1A4A8A 60%,#2563EB 100%)",...SH2}}>
+      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#1C1917 0%,#991B1B 60%,#DC2626 100%)",...SH2}}>
         <div className="absolute right-0 top-0 opacity-10 text-9xl">🏗️</div>
         <div className="relative flex flex-wrap justify-between items-start gap-4">
           <div>
@@ -408,7 +409,7 @@ function ProjDetail({proj,acts,setActs,onBack}){
           </div>
           <div className="flex gap-4 text-center">
             {[["Progress",`${prog}%`],["Waktu",`${timeUsed}%`],["Durasi",`${totalDays}h`],["Task",`${done}/${totalTask}`]].map(([l,v],i)=>(
-              <div key={i}><div className="text-2xl font-extrabold">{v}</div><div className="text-xs" style={{color:"#93C5FD"}}>{l}</div></div>
+              <div key={i}><div className="text-2xl font-extrabold">{v}</div><div className="text-xs" style={{color:"#FCA5A5"}}>{l}</div></div>
             ))}
           </div>
         </div>
@@ -428,7 +429,7 @@ function ProjDetail({proj,acts,setActs,onBack}){
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         {[["wbs","📋 WBS & Aktivitas"],["gantt","📅 Gantt Chart"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setTab(id)} className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab===id?"border-blue-600 text-blue-600":"border-transparent text-gray-500 hover:text-gray-700"}`}>{lbl}</button>
+          <button key={id} onClick={()=>setTab(id)} className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab===id?"border-red-600 text-red-600":"border-transparent text-gray-500 hover:text-gray-700"}`}>{lbl}</button>
         ))}
       </div>
       {tab==="wbs"?<WBSTable proj={proj} myActs={myActs} setActs={setActs}/>:<GanttChart proj={proj} myActs={myActs}/>}
@@ -451,7 +452,7 @@ function Projects({projs,setProjs,acts,setActs}){
     <div className="space-y-4">
       {/* Summary */}
       <div className="grid grid-cols-4 gap-3">
-        {[{l:"Total Proyek",v:projs.length,c:"#0066CC",i:"📋",bg:"#EFF6FF"},{l:"On Track",v:projs.filter(p=>p.st==="on-track").length,c:"#16A34A",i:"✅",bg:"#F0FDF4"},{l:"At Risk",v:projs.filter(p=>p.st==="at-risk").length,c:"#D97706",i:"⚠️",bg:"#FFFBEB"},{l:"Delayed",v:projs.filter(p=>p.st==="delayed").length,c:"#DC2626",i:"🔴",bg:"#FEF2F2"}].map((k,i)=>(
+        {[{l:"Total Proyek",v:projs.length,c:"#DC2626",i:"📋",bg:"#FEF2F2"},{l:"On Track",v:projs.filter(p=>p.st==="on-track").length,c:"#16A34A",i:"✅",bg:"#F0FDF4"},{l:"At Risk",v:projs.filter(p=>p.st==="at-risk").length,c:"#D97706",i:"⚠️",bg:"#FFFBEB"},{l:"Delayed",v:projs.filter(p=>p.st==="delayed").length,c:"#DC2626",i:"🔴",bg:"#FEF2F2"}].map((k,i)=>(
           <div key={i} className="bg-white rounded-xl p-3.5 border border-gray-100 flex items-center gap-3" style={SH}>
             <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{background:k.bg}}>{k.i}</div>
             <div><div className="text-xs text-gray-400">{k.l}</div><div className="font-extrabold text-2xl" style={{color:k.c}}>{k.v}</div></div>
@@ -464,11 +465,11 @@ function Projects({projs,setProjs,acts,setActs}){
           <select value={filCo} onChange={e=>setFilCo(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-600 bg-white">
             <option value="all">Semua Perusahaan ({projs.length})</option>{COS.map(c=><option key={c} value={c}>{c} ({projs.filter(p=>p.co===c).length})</option>)}</select>
           <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-            <button onClick={()=>setView("card")} className={`px-3 py-2 text-xs font-medium ${view==="card"?"bg-blue-600 text-white":"bg-white text-gray-500"}`}>▦ Kartu</button>
-            <button onClick={()=>setView("table")} className={`px-3 py-2 text-xs font-medium ${view==="table"?"bg-blue-600 text-white":"bg-white text-gray-500"}`}>☰ Tabel</button>
+            <button onClick={()=>setView("card")} className={`px-3 py-2 text-xs font-medium ${view==="card"?"bg-red-600 text-white":"bg-white text-gray-500"}`}>▦ Kartu</button>
+            <button onClick={()=>setView("table")} className={`px-3 py-2 text-xs font-medium ${view==="table"?"bg-red-600 text-white":"bg-white text-gray-500"}`}>☰ Tabel</button>
           </div>
         </div>
-        <button onClick={()=>setShowAdd(true)} className="text-xs text-white px-4 py-2 rounded-lg font-medium shadow-sm" style={{background:"#0066CC"}}>+ Tambah Proyek</button>
+        <button onClick={()=>setShowAdd(true)} className="text-xs text-white px-4 py-2 rounded-lg font-medium shadow-sm" style={{background:"#DC2626"}}>+ Tambah Proyek</button>
       </div>
 
       {view==="card"?(
@@ -478,10 +479,10 @@ function Projects({projs,setProjs,acts,setActs}){
               <div className="h-1.5" style={{background:p.st==="on-track"?"#16A34A":p.st==="at-risk"?"#F59E0B":"#EF4444"}}></div>
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded" style={{background:"#EFF6FF",color:"#1D4ED8"}}>{p.code}</span>
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded" style={{background:"#FEF2F2",color:"#B91C1C"}}>{p.code}</span>
                   <Badge st={p.st}/>
                 </div>
-                <h3 className="font-bold text-sm text-gray-800 mb-0.5 group-hover:text-blue-600 transition-colors leading-tight">{p.name}</h3>
+                <h3 className="font-bold text-sm text-gray-800 mb-0.5 group-hover:text-red-600 transition-colors leading-tight">{p.name}</h3>
                 <p className="text-xs text-gray-400 mb-3">{p.co}</p>
                 <div className="mb-3">
                   <div className="flex justify-between text-xs mb-1"><span className="text-gray-500">Progress Fisik</span><span className="font-bold" style={{color:pg>=80?"#16A34A":pg>=40?"#F59E0B":"#EF4444"}}>{pg}%</span></div>
@@ -504,8 +505,8 @@ function Projects({projs,setProjs,acts,setActs}){
           <div className="overflow-x-auto"><table className="w-full text-xs" style={{minWidth:"900px"}}>
             <thead><tr style={{background:"#F1F5F9"}}>{["Kode","Nama Proyek","Perusahaan","Mulai","Selesai","Progress","SPI","CPI","Anggaran","Status","Aksi"].map((h,i)=>(<th key={i} className={`p-3 font-semibold text-gray-500 whitespace-nowrap ${i<2?"text-left":"text-center"}`}>{h}</th>))}</tr></thead>
             <tbody>{filtered.map(p=>{ const pg=projProg(acts,p.id); const sc=projSpiCpi[p.id]||[1,1];
-              return (<tr key={p.id} className="border-t hover:bg-blue-50/40 transition-colors" style={{borderColor:"#F1F5F9"}}>
-                <td className="p-3 font-mono font-bold" style={{color:"#1D4ED8"}}>{p.code}</td>
+              return (<tr key={p.id} className="border-t hover:bg-red-50/40 transition-colors" style={{borderColor:"#F1F5F9"}}>
+                <td className="p-3 font-mono font-bold" style={{color:"#B91C1C"}}>{p.code}</td>
                 <td className="p-3"><div className="font-semibold text-gray-800">{p.name}</div><div className="text-gray-400">{dif(p.start,p.end)} hari</div></td>
                 <td className="p-3 text-center text-gray-600">{p.co}</td>
                 <td className="p-3 text-center text-gray-500">{fmtD(p.start)}</td>
@@ -515,7 +516,7 @@ function Projects({projs,setProjs,acts,setActs}){
                 <td className="p-3 text-center font-bold" style={{color:iCol(sc[1])}}>{sc[1].toFixed(2)}</td>
                 <td className="p-3 text-center text-gray-600">{rp(p.bud)} M</td>
                 <td className="p-3 text-center"><Badge st={p.st}/></td>
-                <td className="p-3 text-center"><button onClick={()=>setSelProj(p)} className="text-xs text-white px-3 py-1.5 rounded-lg font-medium" style={{background:"#0066CC"}}>Buka →</button></td>
+                <td className="p-3 text-center"><button onClick={()=>setSelProj(p)} className="text-xs text-white px-3 py-1.5 rounded-lg font-medium" style={{background:"#DC2626"}}>Buka →</button></td>
               </tr>);
             })}</tbody>
           </table></div>
@@ -538,7 +539,7 @@ function Dashboard({setView}){
   const totalSp=COS_PF.reduce((a,c)=>a+c.sp,0).toFixed(1);
   const avgPct=Math.round(COS_PF.reduce((a,c)=>a+c.pct*c.proj,0)/totalProj);
   const KPI=[
-    {l:"Total Proyek Aktif",v:totalProj,s:"6 Perusahaan BUMN",i:"📋",g:"linear-gradient(135deg,#3B82F6,#2563EB)"},
+    {l:"Total Proyek Aktif",v:totalProj,s:"6 Perusahaan BUMN",i:"📋",g:"linear-gradient(135deg,#EF4444,#DC2626)"},
     {l:"Total Anggaran 2025",v:`${totalBud} T`,s:"RKAP 2025",i:"💰",g:"linear-gradient(135deg,#22C55E,#16A34A)"},
     {l:"Realisasi Anggaran",v:`${totalSp} T`,s:`${Math.round(totalSp/totalBud*100)}% terserap`,i:"📊",g:"linear-gradient(135deg,#F59E0B,#D97706)"},
     {l:"Progress Rata-rata",v:`${avgPct}%`,s:"Target periode: 71%",i:"🎯",g:"linear-gradient(135deg,#8B5CF6,#7C3AED)"},
@@ -546,7 +547,7 @@ function Dashboard({setView}){
   return (
     <div className="space-y-4">
       {/* Gradient hero banner */}
-      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#0D1F3C,#1A4A8A 70%,#2563EB)",...SH2}}>
+      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#1C1917,#991B1B 70%,#DC2626)",...SH2}}>
         <div className="absolute -right-6 -top-6 w-40 h-40 rounded-full opacity-10" style={{background:"#F5A623"}}></div>
         <div className="relative flex justify-between items-center flex-wrap gap-3">
           <div>
@@ -555,7 +556,8 @@ function Dashboard({setView}){
           </div>
           <div className="flex gap-2">
             <button className="text-xs px-3 py-2 rounded-lg font-medium" style={{background:"rgba(255,255,255,.15)"}}>📅 Periode 2025</button>
-            <button className="text-xs px-3 py-2 rounded-lg font-medium text-gray-900" style={{background:"#F5A623"}}>↓ Export Report</button>
+            <button onClick={() => exportToPDF(IP, rp, fmtD)} className="text-xs px-3 py-2 rounded-lg font-medium text-gray-900 hover:opacity-90" style={{background:"#F5A623"}}>↓ PDF</button>
+            <button onClick={() => exportToExcel(IP, rp, fmtD)} className="text-xs px-3 py-2 rounded-lg font-medium text-gray-900 hover:opacity-90" style={{background:"#22C55E", color: "white"}}>↓ Excel</button>
           </div>
         </div>
       </div>
@@ -581,18 +583,18 @@ function Dashboard({setView}){
         <div className="col-span-2 bg-white rounded-xl p-4 border border-gray-100" style={SH}>
           <div className="flex justify-between items-start mb-2">
             <div><h3 className="font-bold text-sm text-gray-800">Kurva-S Portofolio 2025</h3><p className="text-xs text-gray-400">Kumulatif Progress Rencana vs Realisasi (%)</p></div>
-            <div className="flex gap-3 text-xs text-gray-500"><span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded bg-blue-500"></span>Rencana</span><span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded bg-green-500"></span>Realisasi</span></div>
+            <div className="flex gap-3 text-xs text-gray-500"><span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded bg-red-500"></span>Rencana</span><span className="flex items-center gap-1"><span className="inline-block w-4 h-0.5 rounded bg-green-500"></span>Realisasi</span></div>
           </div>
           <ResponsiveContainer width="100%" height={195}>
             <AreaChart data={SCURVE} margin={{top:5,right:5,left:-20,bottom:0}}>
-              <defs><linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25}/><stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/></linearGradient><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/><stop offset="95%" stopColor="#22C55E" stopOpacity={0}/></linearGradient></defs>
+              <defs><linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#EF4444" stopOpacity={0.25}/><stop offset="95%" stopColor="#EF4444" stopOpacity={0}/></linearGradient><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/><stop offset="95%" stopColor="#22C55E" stopOpacity={0}/></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9"/><XAxis dataKey="m" tick={{fontSize:10}}/><YAxis tick={{fontSize:10}} unit="%" domain={[0,100]}/>
               <Tooltip formatter={(v,n)=>[v!=null?`${v}%`:"-",n==="plan"?"Rencana":"Realisasi"]}/>
-              <Area type="monotone" dataKey="plan" stroke="#3B82F6" strokeWidth={2} fill="url(#gP)" dot={false} connectNulls/>
+              <Area type="monotone" dataKey="plan" stroke="#EF4444" strokeWidth={2} fill="url(#gP)" dot={false} connectNulls/>
               <Area type="monotone" dataKey="act" stroke="#22C55E" strokeWidth={2.5} fill="url(#gA)" dot={{r:3,fill:"#22C55E"}} connectNulls={false}/>
             </AreaChart>
           </ResponsiveContainer>
-          <div className="grid grid-cols-3 gap-2 mt-1">{[["Rencana Jun","55.0%","#3B82F6"],["Realisasi Jun","50.2%","#22C55E"],["Deviasi","-4.8%","#EF4444"]].map(([l,v,c],i)=>(<div key={i} className="rounded-lg p-2 text-center" style={{background:"#F8FAFC"}}><div className="text-xs text-gray-400">{l}</div><div className="font-bold text-sm" style={{color:c}}>{v}</div></div>))}</div>
+          <div className="grid grid-cols-3 gap-2 mt-1">{[["Rencana Jun","55.0%","#EF4444"],["Realisasi Jun","50.2%","#22C55E"],["Deviasi","-4.8%","#EF4444"]].map(([l,v,c],i)=>(<div key={i} className="rounded-lg p-2 text-center" style={{background:"#F8FAFC"}}><div className="text-xs text-gray-400">{l}</div><div className="font-bold text-sm" style={{color:c}}>{v}</div></div>))}</div>
         </div>
         <div className="flex flex-col gap-3">
           <div className="bg-white rounded-xl p-4 border border-gray-100 flex-1" style={SH}>
@@ -611,11 +613,11 @@ function Dashboard({setView}){
       </div>
       {/* Company performance table */}
       <div className="bg-white rounded-xl p-4 border border-gray-100" style={SH}>
-        <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-sm text-gray-800">Rekap Kinerja per Perusahaan</h3><button onClick={()=>setView("portfolio")} className="text-xs font-medium text-blue-600 hover:underline">Lihat Portfolio →</button></div>
+        <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-sm text-gray-800">Rekap Kinerja per Perusahaan</h3><button onClick={()=>setView("portfolio")} className="text-xs font-medium text-red-600 hover:underline">Lihat Portfolio →</button></div>
         <table className="w-full text-xs"><thead><tr style={{background:"#F1F5F9"}}>{["Perusahaan","Sektor","Proyek","Progress","SPI","CPI","Anggaran","Status"].map((h,i)=>(<th key={i} className={`p-2 font-semibold text-gray-500 ${i===0?"text-left":"text-center"}`}>{h}</th>))}</tr></thead>
-          <tbody>{COS_PF.map((c,i)=>(<tr key={i} className="border-t hover:bg-blue-50/30 transition-colors" style={{borderColor:"#F1F5F9"}}>
+          <tbody>{COS_PF.map((c,i)=>(<tr key={i} className="border-t hover:bg-red-50/30 transition-colors" style={{borderColor:"#F1F5F9"}}>
             <td className="p-2"><div className="flex items-center gap-2"><div className="w-1 h-6 rounded-full" style={{background:c.col}}></div><span className="font-semibold text-gray-800">{c.n}</span></div></td>
-            <td className="p-2 text-center text-gray-500">{c.sec}</td><td className="p-2 text-center font-bold text-blue-600">{c.proj}</td>
+            <td className="p-2 text-center text-gray-500">{c.sec}</td><td className="p-2 text-center font-bold text-red-600">{c.proj}</td>
             <td className="p-2"><div className="flex items-center gap-1.5 justify-center"><div className="w-16"><PBar v={c.pct} col={c.col}/></div><span className="font-bold text-gray-700 w-7 text-right">{c.pct}%</span></div></td>
             <td className="p-2 text-center font-bold" style={{color:iCol(c.spi)}}>{c.spi.toFixed(2)}</td><td className="p-2 text-center font-bold" style={{color:iCol(c.cpi)}}>{c.cpi.toFixed(2)}</td>
             <td className="p-2 text-center text-gray-600">{c.bud}T</td><td className="p-2 text-center"><Badge st={c.spi>=.9&&c.cpi>=.9?"on-track":c.spi>=.8?"at-risk":"delayed"}/></td>
@@ -635,7 +637,7 @@ function Portfolio(){
   const totSp=COS_PF.reduce((a,c)=>a+c.sp,0);
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#0D1F3C,#1A4A8A 70%,#7C3AED)",...SH2}}>
+      <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{background:"linear-gradient(120deg,#1C1917,#991B1B 70%,#7C3AED)",...SH2}}>
         <div className="relative flex justify-between items-center flex-wrap gap-3">
           <div><h2 className="text-xl font-bold">Portfolio Management</h2><p className="text-sm mt-0.5" style={{color:"#C4B5FD"}}>Analisis perbandingan kinerja lintas perusahaan untuk Danantara</p></div>
           <div className="flex gap-4 text-center">
@@ -687,7 +689,7 @@ function Portfolio(){
               <XAxis type="number" tick={{fontSize:9}}/><YAxis dataKey="n" type="category" tick={{fontSize:9}} width={72}/>
               <Tooltip formatter={v=>`${v} T`}/>
               <Bar dataKey="bud" name="Anggaran" fill="#E2E8F0" radius={[0,4,4,0]} barSize={9}/>
-              <Bar dataKey="sp" name="Realisasi" fill="#3B82F6" radius={[0,4,4,0]} barSize={9}/>
+              <Bar dataKey="sp" name="Realisasi" fill="#EF4444" radius={[0,4,4,0]} barSize={9}/>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -698,10 +700,10 @@ function Portfolio(){
         <h3 className="font-bold text-sm text-gray-800 mb-3">🏆 Peringkat Kinerja Perusahaan</h3>
         <table className="w-full text-xs"><thead><tr style={{background:"#F1F5F9"}}>{["#","Perusahaan","Proyek","Progress","Target","SPI","CPI","Serapan","Risiko","Skor"].map((h,i)=>(<th key={i} className={`p-2 font-semibold text-gray-500 ${i===1?"text-left":"text-center"}`}>{h}</th>))}</tr></thead>
           <tbody>{ranked.map((c,i)=>{ const skor=Math.round((c.spi+c.cpi)/2*100); const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1;
-            return (<tr key={i} className="border-t hover:bg-blue-50/30 transition-colors" style={{borderColor:"#F1F5F9"}}>
+            return (<tr key={i} className="border-t hover:bg-red-50/30 transition-colors" style={{borderColor:"#F1F5F9"}}>
               <td className="p-2 text-center font-bold text-base">{medal}</td>
               <td className="p-2"><div className="flex items-center gap-2"><div className="w-1 h-6 rounded-full" style={{background:c.col}}></div><div><div className="font-semibold text-gray-800">{c.n}</div><div className="text-gray-400" style={{fontSize:"10px"}}>{c.sec}</div></div></div></td>
-              <td className="p-2 text-center font-bold text-blue-600">{c.proj}</td>
+              <td className="p-2 text-center font-bold text-red-600">{c.proj}</td>
               <td className="p-2"><div className="flex items-center gap-1.5 justify-center"><div className="w-14"><PBar v={c.pct} col={c.col}/></div><span className="font-bold w-7 text-right text-gray-700">{c.pct}%</span></div></td>
               <td className="p-2 text-center"><span className={c.pct>=c.target?"text-green-600":"text-red-500"}>{c.pct>=c.target?"✓":"✗"} {c.target}%</span></td>
               <td className="p-2 text-center font-bold" style={{color:iCol(c.spi)}}>{c.spi.toFixed(2)}</td>
@@ -810,8 +812,8 @@ function CostEVM({projs,acts}){
               <div className="font-bold mb-0.5" style={{color:vac>=0?"#15803D":"#991B1B"}}>Proyeksi Akhir</div>
               <div className="text-gray-600">Estimasi biaya akhir (EAC) <b>{rp(Math.round(eac))} M</b>, {vac>=0?"masih dalam":"melebihi"} anggaran sebesar <b>{rp(Math.abs(Math.round(vac)))} M</b>.</div>
             </div>
-            <div className="rounded-lg p-2.5" style={{background:"#EFF6FF"}}>
-              <div className="font-bold mb-0.5 text-blue-700">TCPI {isFinite(tcpi)?tcpi.toFixed(2):"—"}</div>
+            <div className="rounded-lg p-2.5" style={{background:"#FEF2F2"}}>
+              <div className="font-bold mb-0.5 text-red-700">TCPI {isFinite(tcpi)?tcpi.toFixed(2):"—"}</div>
               <div className="text-gray-600">Indeks efisiensi yang dibutuhkan untuk menyelesaikan sesuai anggaran.</div>
             </div>
           </div>
@@ -859,7 +861,7 @@ function CostEVM({projs,acts}){
 ════════════════════════════════════════════════ */
 const rCol=s=>s>=16?"#DC2626":s>=10?"#F97316":s>=5?"#EAB308":"#22C55E";
 const rLbl=s=>s>=16?"Kritis":s>=10?"Tinggi":s>=5?"Sedang":"Rendah";
-const stCls=s=>({"Open":"bg-red-100 text-red-700","Mitigasi":"bg-orange-100 text-orange-700","Monitor":"bg-blue-100 text-blue-700","Closed":"bg-gray-100 text-gray-500","In Progress":"bg-blue-100 text-blue-700","Resolved":"bg-green-100 text-green-700"}[s]||"bg-gray-100 text-gray-500");
+const stCls=s=>({"Open":"bg-red-100 text-red-700","Mitigasi":"bg-orange-100 text-orange-700","Monitor":"bg-red-100 text-red-700","Closed":"bg-gray-100 text-gray-500","In Progress":"bg-red-100 text-red-700","Resolved":"bg-green-100 text-green-700"}[s]||"bg-gray-100 text-gray-500");
 const prioCls=p=>({"Kritis":"bg-red-100 text-red-700","Tinggi":"bg-orange-100 text-orange-700","Sedang":"bg-yellow-100 text-yellow-700","Rendah":"bg-gray-100 text-gray-500"}[p]||"bg-gray-100 text-gray-500");
 
 function AddRiskModal({projs,onSave,onClose}){
@@ -874,14 +876,14 @@ function AddRiskModal({projs,onSave,onClose}){
           <Sel label="Proyek" value={f.pid} onChange={e=>s("pid",e.target.value)}>{projs.map(p=><option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</Sel>
           <Sel label="Kategori" value={f.cat} onChange={e=>s("cat",e.target.value)}>{cats.map(c=><option key={c}>{c}</option>)}</Sel>
         </div>
-        <div><label className="text-xs font-semibold text-gray-500 block mb-1">Deskripsi Risiko *</label><textarea rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-blue-400 focus:outline-none" placeholder="Jelaskan risiko..." value={f.desc} onChange={e=>s("desc",e.target.value)}/></div>
+        <div><label className="text-xs font-semibold text-gray-500 block mb-1">Deskripsi Risiko *</label><textarea rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-red-400 focus:outline-none" placeholder="Jelaskan risiko..." value={f.desc} onChange={e=>s("desc",e.target.value)}/></div>
         <div className="grid grid-cols-3 gap-3">
           <Sel label="Probabilitas (1-5)" value={f.prob} onChange={e=>s("prob",+e.target.value)}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} - {["Sangat Rendah","Rendah","Sedang","Tinggi","Sangat Tinggi"][n-1]}</option>)}</Sel>
           <Sel label="Dampak (1-5)" value={f.imp} onChange={e=>s("imp",+e.target.value)}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} - {["Sangat Rendah","Rendah","Sedang","Tinggi","Sangat Tinggi"][n-1]}</option>)}</Sel>
           <div><label className="text-xs font-semibold text-gray-500 block mb-1">Skor Risiko</label><div className="rounded-lg px-3 py-2 text-sm font-bold text-center text-white" style={{background:rCol(sc)}}>{sc} · {rLbl(sc)}</div></div>
         </div>
         <div className="grid grid-cols-2 gap-3"><Inp label="Pemilik Risiko" placeholder="Role/Nama PIC" value={f.owner} onChange={e=>s("owner",e.target.value)}/><Inp label="Target Mitigasi" type="date" value={f.due} onChange={e=>s("due",e.target.value)}/></div>
-        <div><label className="text-xs font-semibold text-gray-500 block mb-1">Rencana Mitigasi</label><textarea rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-blue-400 focus:outline-none" placeholder="Langkah mitigasi..." value={f.mit} onChange={e=>s("mit",e.target.value)}/></div>
+        <div><label className="text-xs font-semibold text-gray-500 block mb-1">Rencana Mitigasi</label><textarea rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:border-red-400 focus:outline-none" placeholder="Langkah mitigasi..." value={f.mit} onChange={e=>s("mit",e.target.value)}/></div>
         <Sel label="Status" value={f.st} onChange={e=>s("st",e.target.value)}><option>Open</option><option>Mitigasi</option><option>Monitor</option><option>Closed</option></Sel>
       </div>
       <div className="p-4 border-t border-gray-100 flex justify-end gap-2">
@@ -942,7 +944,7 @@ function Risk({projs}){
                 <div className="flex-1">
                   {matrix.map((row,ri)=>(<div key={ri} className="flex items-center gap-1 mb-1">
                     <div className="w-3 text-xs text-gray-400 text-right">{5-ri}</div>
-                    {row.map((cell,ci)=>(<div key={ci} className="flex-1 flex items-center justify-center rounded cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all" style={{background:cellBg(cell.sc),border:`1px solid ${cellBr(cell.sc)}`,minHeight:"36px"}} title={cell.hits.map(r=>r.desc).join("\n")||`Skor ${cell.sc}`}>
+                    {row.map((cell,ci)=>(<div key={ci} className="flex-1 flex items-center justify-center rounded cursor-pointer hover:ring-2 hover:ring-red-300 transition-all" style={{background:cellBg(cell.sc),border:`1px solid ${cellBr(cell.sc)}`,minHeight:"36px"}} title={cell.hits.map(r=>r.desc).join("\n")||`Skor ${cell.sc}`}>
                       {cell.hits.length>0?<div className="text-center"><div className="text-xs font-extrabold" style={{color:rCol(cell.sc)}}>{cell.hits.length}</div><div className="text-xs" style={{color:rCol(cell.sc),fontSize:"8px"}}>risiko</div></div>:<span className="text-xs" style={{color:rCol(cell.sc),opacity:.35}}>{cell.sc}</span>}
                     </div>))}
                   </div>))}
@@ -956,7 +958,7 @@ function Risk({projs}){
             <div className="bg-white rounded-xl p-5 border border-gray-100" style={SH}>
               <h3 className="font-bold text-sm text-gray-800 mb-3">Ringkasan & Distribusi</h3>
               <div className="grid grid-cols-2 gap-2 mb-4">
-                {[{l:"Total Risiko",v:risks.length,c:"#3B82F6"},{l:"Open",v:risks.filter(r=>r.st==="Open").length,c:"#EF4444"},{l:"In Mitigasi",v:risks.filter(r=>r.st==="Mitigasi").length,c:"#F97316"},{l:"Closed",v:risks.filter(r=>r.st==="Closed").length,c:"#22C55E"}].map((s,i)=>(<div key={i} className="rounded-lg p-2.5 text-center" style={{background:"#F8FAFC"}}><div className="font-extrabold text-2xl" style={{color:s.c}}>{s.v}</div><div className="text-xs text-gray-400">{s.l}</div></div>))}
+                {[{l:"Total Risiko",v:risks.length,c:"#EF4444"},{l:"Open",v:risks.filter(r=>r.st==="Open").length,c:"#EF4444"},{l:"In Mitigasi",v:risks.filter(r=>r.st==="Mitigasi").length,c:"#F97316"},{l:"Closed",v:risks.filter(r=>r.st==="Closed").length,c:"#22C55E"}].map((s,i)=>(<div key={i} className="rounded-lg p-2.5 text-center" style={{background:"#F8FAFC"}}><div className="font-extrabold text-2xl" style={{color:s.c}}>{s.v}</div><div className="text-xs text-gray-400">{s.l}</div></div>))}
               </div>
               <p className="text-xs font-semibold text-gray-500 mb-2">Top 3 Risiko Tertinggi</p>
               <div className="space-y-2">{[...risks].filter(r=>r.st!=="Closed").sort((a,b)=>b.prob*b.imp-a.prob*a.imp).slice(0,3).map((r,i)=>{const sc=r.prob*r.imp;return (<div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{background:"#F8FAFC"}}><div className="w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-xs flex-shrink-0 text-white" style={{background:rCol(sc)}}>{sc}</div><div className="flex-1 min-w-0"><div className="text-xs font-medium text-gray-800 truncate">{r.desc}</div><div className="text-xs text-gray-400">{r.co} · {r.cat}</div></div></div>);})}</div>
@@ -972,7 +974,7 @@ function Risk({projs}){
                 <td className="p-2 font-mono text-gray-400 text-center">{r.id}</td>
                 <td className="p-2 font-medium text-gray-800 max-w-[180px]">{r.desc}</td>
                 <td className="p-2 text-center text-gray-600">{r.co}</td>
-                <td className="p-2 text-center"><span className="px-1.5 py-0.5 rounded text-xs" style={{background:"#EFF6FF",color:"#1D4ED8"}}>{r.cat}</span></td>
+                <td className="p-2 text-center"><span className="px-1.5 py-0.5 rounded text-xs" style={{background:"#FEF2F2",color:"#B91C1C"}}>{r.cat}</span></td>
                 <td className="p-2 text-center font-bold text-gray-700">{r.prob}</td><td className="p-2 text-center font-bold text-gray-700">{r.imp}</td>
                 <td className="p-2 text-center"><span className="font-extrabold" style={{color:rCol(sc)}}>{sc}</span></td>
                 <td className="p-2 text-center"><span className="px-1.5 py-0.5 rounded text-xs font-bold text-white" style={{background:rCol(sc)}}>{rLbl(sc)}</span></td>
@@ -988,7 +990,7 @@ function Risk({projs}){
         /* Issue Tracker */
         <>
           <div className="grid grid-cols-4 gap-3">
-            {[{l:"Total Isu",v:issues.length,c:"#3B82F6",i:"📋"},{l:"Kritis",v:issues.filter(i=>i.prio==="Kritis").length,c:"#DC2626",i:"🔴"},{l:"In Progress",v:issues.filter(i=>i.st==="In Progress").length,c:"#F59E0B",i:"⏳"},{l:"Resolved",v:issues.filter(i=>i.st==="Resolved").length,c:"#16A34A",i:"✅"}].map((k,i)=>(
+            {[{l:"Total Isu",v:issues.length,c:"#EF4444",i:"📋"},{l:"Kritis",v:issues.filter(i=>i.prio==="Kritis").length,c:"#DC2626",i:"🔴"},{l:"In Progress",v:issues.filter(i=>i.st==="In Progress").length,c:"#F59E0B",i:"⏳"},{l:"Resolved",v:issues.filter(i=>i.st==="Resolved").length,c:"#16A34A",i:"✅"}].map((k,i)=>(
               <div key={i} className="bg-white rounded-xl p-3.5 border border-gray-100 flex items-center gap-3" style={SH}><span className="text-2xl">{k.i}</span><div><div className="text-xs text-gray-400">{k.l}</div><div className="font-extrabold text-2xl" style={{color:k.c}}>{k.v}</div></div></div>
             ))}
           </div>
@@ -1045,19 +1047,19 @@ export default function App(){
   };
   return (
     <div className="flex h-screen overflow-hidden" style={{fontFamily:"system-ui,-apple-system,sans-serif",background:"#EEF2F7"}}>
-      <aside className="flex flex-col flex-shrink-0 transition-all duration-200" style={{width:sOpen?"205px":"54px",background:"linear-gradient(180deg,#0D1F3C,#0A1730)"}}>
-        <div className="flex items-center gap-2.5 p-3 border-b" style={{borderColor:"#1A3A5C"}}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style={{background:"#F5A623",color:"#0D1F3C"}}>D</div>
-          {sOpen&&<div><div className="text-white font-bold text-xs">Danantara</div><div className="text-xs" style={{color:"#93C5FD"}}>PMO System</div></div>}
+      <aside className="flex flex-col flex-shrink-0 transition-all duration-200" style={{width:sOpen?"205px":"54px",background:"linear-gradient(180deg,#1C1917,#0C0A09)"}}>
+        <div className="flex items-center gap-2.5 p-3 border-b" style={{borderColor:"#292524"}}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style={{background:"#F5A623",color:"#1C1917"}}>D</div>
+          {sOpen&&<div><div className="text-white font-bold text-xs">Danantara</div><div className="text-xs" style={{color:"#FCA5A5"}}>PMO System</div></div>}
         </div>
-        {sOpen&&<div className="px-3 py-2 border-b" style={{borderColor:"#1A3A5C"}}><div className="text-xs font-semibold mb-1" style={{color:"#64748B"}}>PERUSAHAAN</div>
-          <select className="w-full text-xs rounded-lg px-2 py-1.5 border-0 font-medium" style={{background:"#1A3A5C",color:"white"}}><option>Semua BUMN</option>{[...new Set(projs.map(p=>p.co))].map(c=><option key={c}>{c}</option>)}</select></div>}
+        {sOpen&&<div className="px-3 py-2 border-b" style={{borderColor:"#292524"}}><div className="text-xs font-semibold mb-1" style={{color:"#64748B"}}>PERUSAHAAN</div>
+          <select className="w-full text-xs rounded-lg px-2 py-1.5 border-0 font-medium" style={{background:"#292524",color:"white"}}><option>Semua BUMN</option>{[...new Set(projs.map(p=>p.co))].map(c=><option key={c}>{c}</option>)}</select></div>}
         <nav className="flex-1 py-2 overflow-y-auto">
-          {NAV.map(item=>(<button key={item.id} onClick={()=>setView(item.id)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors relative" style={{background:view===item.id?"#1A4A8A":"transparent",color:view===item.id?"#FFFFFF":"#93C5FD"}}>
+          {NAV.map(item=>(<button key={item.id} onClick={()=>setView(item.id)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors relative" style={{background:view===item.id?"#991B1B":"transparent",color:view===item.id?"#FFFFFF":"#FCA5A5"}}>
             {view===item.id&&<div className="absolute left-0 top-0 bottom-0 w-1 rounded-r" style={{background:"#F5A623"}}></div>}
             <span className="text-base flex-shrink-0">{item.ico}</span>{sOpen&&<span className="text-xs font-medium truncate">{item.lbl}</span>}</button>))}
         </nav>
-        <button onClick={()=>setSOpen(!sOpen)} className="p-3 text-xs text-center border-t" style={{borderColor:"#1A3A5C",color:"#93C5FD"}}>{sOpen?"◀ Tutup":"▶"}</button>
+        <button onClick={()=>setSOpen(!sOpen)} className="p-3 text-xs text-center border-t" style={{borderColor:"#292524",color:"#FCA5A5"}}>{sOpen?"◀ Tutup":"▶"}</button>
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between" style={{boxShadow:"0 1px 3px rgba(0,0,0,.05)"}}>
@@ -1065,8 +1067,8 @@ export default function App(){
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-xs px-2 py-1 rounded-full border" style={{background:"#F0FDF4",borderColor:"#BBF7D0",color:"#15803D"}}><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>Live</div>
             <button onClick={()=>setView("risk")} className="text-xs px-2 py-1 rounded-lg" style={{background:"#FEF2F2",color:"#DC2626"}}>🔔 3 Alert</button>
-            <button onClick={()=>setView("projects")} className="text-xs text-white px-3 py-1.5 rounded-lg font-medium" style={{background:"#0066CC"}}>+ Proyek</button>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{background:"#F5A623",color:"#0D1F3C"}}>DA</div>
+            <button onClick={()=>setView("projects")} className="text-xs text-white px-3 py-1.5 rounded-lg font-medium" style={{background:"#DC2626"}}>+ Proyek</button>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{background:"#F5A623",color:"#1C1917"}}>DA</div>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4">{render()}</main>
